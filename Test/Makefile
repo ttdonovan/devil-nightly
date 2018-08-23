@@ -1,10 +1,14 @@
 # mingw32 and mingw64 have different executables
 ifdef MINGW32
-	CXX = mingw32-g++
 	AR = mingw32-ar
+	CXX = mingw32-g++
+	DLLTOOL = dlltool
+	WINDRES = windres
 else
-	CXX = i686-w64-mingw32-g++
 	AR = i686-w64-mingw32-ar
+	CXX = i686-w64-mingw32-g++
+	DLLTOOL = i686-w64-mingw32-dlltool
+	WINDRES = i686-w64-mingw32-windres
 endif
 
 # A sample Makefile for building both Google Mock and Google Test and
@@ -67,6 +71,13 @@ CPPFLAGS += -MMD -MF $*.d
 LDFLAGS = -static -lpthread
 
 DIABLO_DIR = ..
+DIABLO_SRC := $(wildcard ../Source/*.cpp)
+DIABLO_SRC := $(filter-out ../Source/fault.cpp, $(DIABLO_SRC))
+DIABLO_SRC := $(filter-out ../Source/logging.cpp, $(DIABLO_SRC))
+DIABLO_OBJS=$(DIABLO_SRC:.cpp=.o)
+
+PKWARE_SRC=$(wildcard ../3rdParty/PKWare/*.cpp)
+PKWARE_OBJS=$(PKWARE_SRC:.cpp=.o)
 
 all : $(TESTS)
 
@@ -118,5 +129,14 @@ gmock_main.a : gmock-all.o gtest-all.o gmock_main.o
 devil_test.o : $(USER_DIR)/devil_test.cpp $(GMOCK_HEADERS)
 	$(CXX) $(CPPFLAGS) -I$(DIABLO_DIR) -I$(GTEST_DIR) -I$(GMOCK_DIR) $(CXXFLAGS) -c $(USER_DIR)/devil_test.cpp
 
-devil_test : devil_test.o gmock_main.a
+devil_test : $(DIABLO_OBJS) $(PKWARE_OBJS) diabres.o diabloui.lib storm.lib devil_test.o gmock_main.a
 	$(CXX) $(CPPFLAGS) -I$(DIABLO_DIR) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
+
+diabres.o: ../Diablo.rc
+	$(WINDRES) $< $@
+
+diabloui.lib: ../diabloui.dll ../DiabloUI/diabloui_gcc.def
+	$(DLLTOOL) -d ../DiabloUI/diabloui_gcc.def -D $< -l $@
+
+storm.lib: ../storm.dll ../3rdParty/Storm/Source/storm_gcc.def
+	$(DLLTOOL) -d ../3rdParty/Storm/Source/storm_gcc.def -D $< -l $@

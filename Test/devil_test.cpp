@@ -14,8 +14,8 @@
 
 #if !defined(GTEST_CUSTOM_INIT_GOOGLE_TEST_FUNCTION_)
 
-TEST(Player, PlayerCppInit) {
-    // player_cpp_init();
+TEST(PlayerTest, CreatePlayer) {
+    CreatePlayer(0, 1);
 }
 
 #endif  // !defined(GTEST_CUSTOM_INIT_GOOGLE_TEST_FUNCTION_)
